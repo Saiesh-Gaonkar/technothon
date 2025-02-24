@@ -36,12 +36,29 @@ function App() {
   const [placesOnRoute, setPlacesOnRoute] = useState([]);
   const [backendResponse, setBackendResponse] = useState([]);
   const [activeMarker, setActiveMarker] = useState(null);
+  const [userLocation, setUserLocation] = useState(null);
 
   const { isLoaded } = useJsApiLoader({
     googleMapsApiKey: "AIzaSyB2rs0uDLILULcxJmljxKGUBHh9uoY-Wt8",
     libraries: ["places"],
   });
 
+  useEffect(() => {
+    // Get the user's current location
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLocation({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          });
+        },
+        (error) => {
+          console.error("Error getting user's location: ", error);
+        }
+      );
+    }
+  }, []);
   const [map, setMap] = useState(null);
 
   const onLoad = useCallback(function callback(map) {
@@ -75,11 +92,18 @@ function App() {
   async function getDestinations(db) {
     try {
       const querySnapshot = await getDocs(collection(db, "events"));
+      const response = [];
       querySnapshot.forEach((doc) => {
-        console.log(`${doc.id} => ${JSON.stringify(doc.data())}`);
-        setBackendResponse([...backendResponse, doc.data()]);
-        console.log("backendResponse", backendResponse);
+        const data = doc.data();
+        response.push({
+          ...data,
+          lat: parseFloat(data.lat),
+          lng: parseFloat(data.lng),
+          name: doc.id,
+        });
       });
+      setBackendResponse(response);
+      console.log("backendResponse", response);
     } catch (e) {
       console.error("Error getting documents: ", e);
     }
@@ -157,7 +181,7 @@ function App() {
           console.log(`place = ${place} destination = ${dest}`);
           const directionsService = new google.maps.DirectionsService();
           const results = await directionsService.route({
-            origin: `${place} goa`,
+            origin: userLocation ? userLocation : `${place} goa`,
             destination: `${dest} goa`,
 
             travelMode: google.maps.TravelMode.DRIVING,
@@ -180,17 +204,29 @@ function App() {
             onUnmount={onUnmount}
           >
             {backendResponse.map((placeObj, idx) => {
+              console.log("backendResponse", backendResponse);
               return (
                 <Marker
                   key={idx + 10000}
                   onClick={() => console.log("clicked")}
-                  onMouseOver={() => setActiveMarker(idx + 10000)}
+                  onMouseOver={() => {
+                    setActiveMarker(idx + 10000);
+                  }}
                   onMouseOut={() => setActiveMarker(null)}
                   position={{
-                    lat: placeObj.lat,
-                    lng: placeObj.lng,
+                    lat: parseFloat(placeObj.lat),
+                    lng: parseFloat(placeObj.lng),
                   }}
-                ></Marker>
+                >
+                  {activeMarker === idx + 10000 && (
+                    <InfoWindow onCloseClick={() => setActiveMarker(null)}>
+                      <div>
+                        <h3>{placeObj.name}</h3>
+                        <p>{placeObj.description}</p>
+                      </div>
+                    </InfoWindow>
+                  )}
+                </Marker>
               );
             })}
 
