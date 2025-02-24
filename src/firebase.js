@@ -1,6 +1,7 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
+import { getFirestore, collection, addDoc, getDocs } from "firebase/firestore";
 import { getVertexAI, getGenerativeModel } from "firebase/vertexai";
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
@@ -28,3 +29,6 @@ const vertexAI = getVertexAI(app);
 export const geminiModel = getGenerativeModel(vertexAI, {
   model: "gemini-2.0-flash",
 });
+
+// Get a Firestore instance
+export const db = getFirestore(app);

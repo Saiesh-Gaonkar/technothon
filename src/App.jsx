@@ -1,5 +1,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { geminiModel } from "./firebase";
+import { getFirestore, collection, addDoc, getDocs } from "firebase/firestore";
+import { db } from "./firebase";
 import {
   GoogleMap,
   useJsApiLoader,
@@ -31,7 +33,7 @@ function App() {
   const [Distance, setDistance] = useState(null);
   const [Duration, setDuration] = useState(null);
   const [placesOnRoute, setPlacesOnRoute] = useState([]);
-
+  const [backendResponse, setBackendResponse] = useState([]);
   const [activeMarker, setActiveMarker] = useState(null);
 
   const { isLoaded } = useJsApiLoader({
@@ -67,9 +69,24 @@ function App() {
       });
     }
   }, [map, directionsResponse]);
+
+  //this call firestore function
+  async function getDestinations(db) {
+    try {
+      const querySnapshot = await getDocs(collection(db, "events"));
+      querySnapshot.forEach((doc) => {
+        console.log(`${doc.id} => ${JSON.stringify(doc.data())}`);
+        setBackendResponse([...backendResponse, doc.data()]);
+        console.log("backendResponse", backendResponse);
+      });
+    } catch (e) {
+      console.error("Error getting documents: ", e);
+    }
+  }
+
   async function run() {
     alert("run is running", mess);
-
+    getDestinations(db);
     const prompt = `${mess} just generate me json of keywords from the given text of place and destination in this way "{
   "place": "Savordem",
   "destination": "Ponda"
@@ -160,6 +177,22 @@ function App() {
             onLoad={onLoad}
             onUnmount={onUnmount}
           >
+            {backendResponse.map((placeObj, idx) => {
+              return (
+                <Marker
+                  key={idx + 10000}
+                  onClick={() => console.log("clicked")}
+                  onMouseOver={() => setActiveMarker(idx + 10000)}
+                  onMouseOut={() => setActiveMarker(null)}
+                  position={{
+                    lat: placeObj.lat,
+                    lng: placeObj.lng,
+                  }}
+                ></Marker>
+              );
+            })}
+
+            {/* displaying all the nearby location on the route */}
             {placesOnRoute.map((placeObj, idx) => {
               console.log("placeObj", placeObj);
               return (
