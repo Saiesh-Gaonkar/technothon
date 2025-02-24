@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect } from "react";
 import { geminiModel } from "./firebase";
 import { getFirestore, collection, addDoc, getDocs } from "firebase/firestore";
 import { db } from "./firebase";
+import "./App.css";
 import {
   GoogleMap,
   useJsApiLoader,
@@ -12,7 +13,7 @@ import {
 } from "@react-google-maps/api";
 
 const containerStyle = {
-  width: "600%",
+  width: "100%",
   height: "600px",
 };
 
@@ -124,16 +125,17 @@ function App() {
       </form> */
   }
   return (
-    <>
-      <div>
+    <div className="app-container">
+      <div className="form-container">
         <form>
           <input
-            style={{ width: "400px" }}
+            className="input-field"
             type="text"
             placeholder="enter your prompt"
             onChange={(e) => setmess(e.target.value)}
           />
           <button
+            className="submit-button"
             onClick={(e) => {
               e.preventDefault();
               run();
@@ -143,14 +145,14 @@ function App() {
           </button>
         </form>
       </div>
-      <div>
+      <div className="info-container">
         <p>
           place is {place} and destination is {dest} | the distance is{" "}
           {Distance} and the duration is {Duration}
         </p>
       </div>
       <button
-        style={{ marginBottom: "50px" }}
+        className="tap-button"
         onClick={async () => {
           console.log(`place = ${place} destination = ${dest}`);
           const directionsService = new google.maps.DirectionsService();
@@ -168,7 +170,7 @@ function App() {
       >
         TAP
       </button>
-      <div>
+      <div className="map-container">
         {isLoaded ? (
           <GoogleMap
             mapContainerStyle={containerStyle}
@@ -230,7 +232,7 @@ function App() {
           <>loading</>
         )}
       </div>
-    </>
+    </div>
   );
 }
 
