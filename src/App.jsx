@@ -41,6 +41,8 @@ async function calculateRoute() {
 
 function App() {
   const [mess, setmess] = useState("");
+  const [place, setplace] = useState("");
+  const [dest, setdest] = useState("");
   const [directionsResponse, setDirectionsResponse] = useState(null);
 
   const { isLoaded } = useJsApiLoader({
@@ -68,14 +70,22 @@ function App() {
     alert("run is running", mess);
     // Provide a prompt that contains text
     // const prompt = `Generate a response to the following text: "${mess}" just generate me keywords that i can feed it to google maps api only keywords`;
-    const prompt = `${mess} just generate me keywords place and destination `;
+    const prompt = `${mess} just generate me json of keywords from the given text of place and destination in this way "{
+  "place": "Savordem",
+  "destination": "Ponda"
+}
+"`;
     // To generate text output, call generateContent with the text input AIzaSyB2rs0uDLILULcxJmljxKGUBHh9uoY-Wt8
     const result = await geminiModel.generateContent(prompt);
 
     const response = result.response;
     const text = response.text();
-    console.log(text);
-    const obj = JSON.parse(text);
+    // console.log(text);
+    const txt = text.slice(7, -4);
+    console.log(`trimmed text = ${txt}`);
+    const obj = JSON.parse(txt);
+    setplace(obj.place);
+    setdest(obj.destination);
     console.log(obj);
   }
 
