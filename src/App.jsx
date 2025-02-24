@@ -9,13 +9,13 @@ import {
 } from "@react-google-maps/api";
 
 const containerStyle = {
-  width: "600px",
+  width: "600%",
   height: "600px",
 };
 
 const center = {
-  lat: 15.2993,
-  lng: 74.124,
+  lat: 15.496777,
+  lng: 73.827827,
 };
 
 async function calculateRoute() {
@@ -44,7 +44,8 @@ function App() {
   const [place, setplace] = useState("");
   const [dest, setdest] = useState("");
   const [directionsResponse, setDirectionsResponse] = useState(null);
-
+  const [Distance, setDistance] = useState(null);
+  const [Duration, setDuration] = useState(null);
   const { isLoaded } = useJsApiLoader({
     // id: "google-map-script",
     googleMapsApiKey: "AIzaSyB2rs0uDLILULcxJmljxKGUBHh9uoY-Wt8",
@@ -114,6 +115,7 @@ function App() {
         <form>
           {" "}
           <input
+            style={{ width: "400px" }}
             type="text"
             placeholder="enter your prompt"
             onChange={(e) => setmess(e.target.value)}
@@ -128,9 +130,14 @@ function App() {
           </button>
         </form>
       </div>
-
+      <div>
+        <p>
+          place is {place} and destination is {dest} | the distance is{" "}
+          {Distance} and the duration is {Duration}
+        </p>
+      </div>
       <button
-        style={{ marginBottom: "300px" }}
+        style={{ marginBottom: "50px" }}
         onClick={async () => {
           console.log(`place = ${place} destination = ${dest}`);
           const directionsService = new google.maps.DirectionsService();
@@ -145,8 +152,9 @@ function App() {
             travelMode: google.maps.TravelMode.DRIVING,
           });
           setDirectionsResponse(results);
-          // setDistance(results.routes[0].legs[0].distance.text);
-          // setDuration(results.routes[0].legs[0].duration.text);
+          console.log("the respose is got", results);
+          setDistance(results.routes[0].legs[0].distance.text);
+          setDuration(results.routes[0].legs[0].duration.text);
         }}
       >
         TAP
@@ -160,6 +168,7 @@ function App() {
             onLoad={onLoad}
             onUnmount={onUnmount}
           >
+            {/* <Marker position={center} /> */}
             {directionsResponse && (
               <DirectionsRenderer directions={directionsResponse} />
             )}
