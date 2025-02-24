@@ -14,8 +14,8 @@ const containerStyle = {
 };
 
 const center = {
-  lat: 28.6448,
-  lng: 77.216721,
+  lat: 15.2993,
+  lng: 74.124,
 };
 
 async function calculateRoute() {
@@ -132,14 +132,16 @@ function App() {
       <button
         style={{ marginBottom: "300px" }}
         onClick={async () => {
+          console.log(`place = ${place} destination = ${dest}`);
           const directionsService = new google.maps.DirectionsService();
           const results = await directionsService.route({
             // origin: originRef.current.value,
             // destination: destiantionRef.current.value,
             // eslint-disable-next-line no-undef
-
-            origin: "margoa",
-            destination: "sanguem",
+            // origin: `betul goa`,
+            // destination: `margoa goa`,
+            origin: `${place} goa`,
+            destination: `${dest} goa`,
             travelMode: google.maps.TravelMode.DRIVING,
           });
           setDirectionsResponse(results);
