@@ -1,10 +1,11 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { geminiModel } from "./firebase";
 import {
   GoogleMap,
   useJsApiLoader,
   Marker,
   Autocomplete,
+  InfoWindow,
   DirectionsRenderer,
 } from "@react-google-maps/api";
 
@@ -19,24 +20,7 @@ const center = {
 };
 
 async function calculateRoute() {
-  // if (originRef.current.value === "" || destiantionRef.current.value === "") {
-  //   return;
-  // }
-  // eslint-disable-next-line no-undef
   console.log("calculating");
-  // const directionsService = new google.maps.DirectionsService();
-  // const results = await directionsService.route({
-  //   // origin: originRef.current.value,
-  //   // destination: destiantionRef.current.value,
-  //   // eslint-disable-next-line no-undef
-
-  //   origin: "New Delhi",
-  //   destination: "Mumbai",
-  //   travelMode: google.maps.TravelMode.DRIVING,
-  // });
-  // setDirectionsResponse(results);
-  // setDistance(results.routes[0].legs[0].distance.text);
-  // setDuration(results.routes[0].legs[0].duration.text);
 }
 
 function App() {
@@ -46,8 +30,11 @@ function App() {
   const [directionsResponse, setDirectionsResponse] = useState(null);
   const [Distance, setDistance] = useState(null);
   const [Duration, setDuration] = useState(null);
+  const [placesOnRoute, setPlacesOnRoute] = useState([]);
+
+  const [activeMarker, setActiveMarker] = useState(null);
+
   const { isLoaded } = useJsApiLoader({
-    // id: "google-map-script",
     googleMapsApiKey: "AIzaSyB2rs0uDLILULcxJmljxKGUBHh9uoY-Wt8",
     libraries: ["places"],
   });
@@ -55,7 +42,6 @@ function App() {
   const [map, setMap] = useState(null);
 
   const onLoad = useCallback(function callback(map) {
-    // This is just an example of getting and using the map instance!!! don't just blindly copy!
     const bounds = new window.google.maps.LatLngBounds(center);
     map.fitBounds(bounds);
 
@@ -66,22 +52,33 @@ function App() {
     setMap(null);
   }, []);
 
-  // Wrap in an async function so you can use await
+  useEffect(() => {
+    if (map && directionsResponse) {
+      const routeBounds = directionsResponse.routes[0].bounds;
+      const service = new window.google.maps.places.PlacesService(map);
+      const request = {
+        bounds: routeBounds,
+        type: "tourist_attraction",
+      };
+      service.nearbySearch(request, (results, status) => {
+        if (status === window.google.maps.places.PlacesServiceStatus.OK) {
+          setPlacesOnRoute(results);
+        }
+      });
+    }
+  }, [map, directionsResponse]);
   async function run() {
     alert("run is running", mess);
-    // Provide a prompt that contains text
-    // const prompt = `Generate a response to the following text: "${mess}" just generate me keywords that i can feed it to google maps api only keywords`;
+
     const prompt = `${mess} just generate me json of keywords from the given text of place and destination in this way "{
   "place": "Savordem",
   "destination": "Ponda"
 }
 "`;
-    // To generate text output, call generateContent with the text input AIzaSyB2rs0uDLILULcxJmljxKGUBHh9uoY-Wt8
     const result = await geminiModel.generateContent(prompt);
 
     const response = result.response;
     const text = response.text();
-    // console.log(text);
     const txt = text.slice(7, -4);
     console.log(`trimmed text = ${txt}`);
     const obj = JSON.parse(txt);
@@ -113,7 +110,6 @@ function App() {
     <>
       <div>
         <form>
-          {" "}
           <input
             style={{ width: "400px" }}
             type="text"
@@ -142,13 +138,9 @@ function App() {
           console.log(`place = ${place} destination = ${dest}`);
           const directionsService = new google.maps.DirectionsService();
           const results = await directionsService.route({
-            // origin: originRef.current.value,
-            // destination: destiantionRef.current.value,
-            // eslint-disable-next-line no-undef
-            // origin: `betul goa`,
-            // destination: `margoa goa`,
             origin: `${place} goa`,
             destination: `${dest} goa`,
+
             travelMode: google.maps.TravelMode.DRIVING,
           });
           setDirectionsResponse(results);
@@ -168,7 +160,35 @@ function App() {
             onLoad={onLoad}
             onUnmount={onUnmount}
           >
-            {/* <Marker position={center} /> */}
+            {placesOnRoute.map((placeObj, idx) => {
+              console.log("placeObj", placeObj);
+              return (
+                <Marker
+                  key={idx}
+                  onClick={() => console.log("clicked")}
+                  onMouseOver={() => setActiveMarker(idx)}
+                  onMouseOut={() => setActiveMarker(null)}
+                  position={placeObj.geometry.location}
+                >
+                  {activeMarker === idx && (
+                    <InfoWindow onCloseClick={() => setActiveMarker(null)}>
+                      <div>
+                        <h3>{placeObj.name}</h3>
+                        <h3>{placeObj.rating}</h3>
+                        {placeObj.photos && placeObj.photos.length > 0 && (
+                          <img
+                            src={placeObj.photos[0].getUrl()}
+                            alt={placeObj.name}
+                            style={{ width: "100px", height: "100px" }}
+                          />
+                        )}
+                      </div>
+                    </InfoWindow>
+                  )}
+                </Marker>
+              );
+            })}
+
             {directionsResponse && (
               <DirectionsRenderer directions={directionsResponse} />
             )}
