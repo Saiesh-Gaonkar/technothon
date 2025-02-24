@@ -174,7 +174,7 @@ function App() {
             )}
           </GoogleMap>
         ) : (
-          <>lund nahi ho reha</>
+          <>loading</>
         )}
       </div>
     </>
