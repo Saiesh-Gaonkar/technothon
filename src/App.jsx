@@ -189,7 +189,7 @@ Extract locations even from vague, informal sentences.`;
           <input
             className="input-field"
             type="text"
-            placeholder="enter your prompt"
+            placeholder="Where would you like to go?"
             onChange={(e) => setmess(e.target.value)}
           />
           <button
@@ -199,22 +199,41 @@ Extract locations even from vague, informal sentences.`;
               run();
             }}
           >
-            SUBMIT
+            Find Route
           </button>
         </form>
         <div className="filter-buttons">
-          <button onClick={() => setTimeRange(1)}>1 Month</button>
-          <button onClick={() => setTimeRange(2)}>2 Months</button>
-          <button onClick={() => setTimeRange(5)}>5 Months</button>
-          <button onClick={() => setTimeRange(10)}>10 Months</button>
-          <button onClick={() => setTimeRange("all")}>All</button>
+          {[1, 2, 5, 10, "all"].map((range) => (
+            <button
+              key={range}
+              className={`filter-button ${timeRange === range ? "active" : ""}`}
+              onClick={() => setTimeRange(range)}
+            >
+              {range === "all"
+                ? "All Events"
+                : `${range} ${range === 1 ? "Month" : "Months"}`}
+            </button>
+          ))}
         </div>
       </div>
+
       <div className="info-container">
-        <p>
-          place is {place} and destination is {dest} | the distance is{" "}
-          {Distance} and the duration is {Duration}
-        </p>
+        <div className="info-text">
+          <div>
+            <span className="info-label">From:</span> {place || "Not selected"}
+          </div>
+          <div>
+            <span className="info-label">To:</span> {dest || "Not selected"}
+          </div>
+          <div>
+            <span className="info-label">Distance:</span>{" "}
+            {Distance || "Not calculated"}
+          </div>
+          <div>
+            <span className="info-label">Duration:</span>{" "}
+            {Duration || "Not calculated"}
+          </div>
+        </div>
       </div>
 
       <button
@@ -235,8 +254,9 @@ Extract locations even from vague, informal sentences.`;
           setDuration(results.routes[0].legs[0].duration.text);
         }}
       >
-        TAP
+        Show Route
       </button>
+
       <div className="map-container">
         {isLoaded ? (
           <GoogleMap
@@ -246,6 +266,14 @@ Extract locations even from vague, informal sentences.`;
             onLoad={onLoad}
             onUnmount={onUnmount}
           >
+            <Marker
+              position={userLocation}
+              icon={{
+                url: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png", // URL to your custom icon
+                scaledSize: new window.google.maps.Size(40, 40), // Adjust the size if needed
+              }}
+            />
+
             {filteredFestivals.map((placeObj, idx) => {
               console.log("backendResponse", backendResponse);
               return (
