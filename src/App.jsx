@@ -22,9 +22,7 @@ const center = {
   lng: 73.827827,
 };
 
-async function calculateRoute() {
-  console.log("calculating");
-}
+const currentMonth = new Date().getMonth();
 
 function App() {
   const [mess, setmess] = useState("");
@@ -37,6 +35,24 @@ function App() {
   const [backendResponse, setBackendResponse] = useState([]);
   const [activeMarker, setActiveMarker] = useState(null);
   const [userLocation, setUserLocation] = useState(null);
+  const [timeRange, setTimeRange] = useState(1); // Default to 1 month
+  const [userLocationDefined, setuserLocationDefined] = useState(null);
+  const [userLocationPlace, setUserLocationPlace] = useState(""); // Store the place name of user location
+  const [test, settest] = useState(null);
+
+  const reverseGeocodeLocation = (location) => {
+    const geocoder = new window.google.maps.Geocoder();
+
+    geocoder.geocode({ location }, (results, status) => {
+      settest(results);
+      if (status === "OK" && results[0]) {
+        console.log("Geocoder results: ", results);
+        setUserLocationPlace(results[0].formatted_address);
+      } else {
+        console.error("Geocoder failed due to: " + status);
+      }
+    });
+  };
 
   const { isLoaded } = useJsApiLoader({
     googleMapsApiKey: "AIzaSyB2rs0uDLILULcxJmljxKGUBHh9uoY-Wt8",
@@ -48,10 +64,13 @@ function App() {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          setUserLocation({
+          const location = {
             lat: position.coords.latitude,
             lng: position.coords.longitude,
-          });
+          };
+          setUserLocation(location);
+
+          reverseGeocodeLocation(location);
         },
         (error) => {
           console.error("Error getting user's location: ", error);
@@ -59,6 +78,8 @@ function App() {
       );
     }
   }, []);
+
+  console.log("user is staying at", userLocationPlace);
   const [map, setMap] = useState(null);
 
   const onLoad = useCallback(function callback(map) {
@@ -88,6 +109,21 @@ function App() {
     }
   }, [map, directionsResponse]);
 
+  const filteredFestivals = backendResponse.filter((placeObj) => {
+    if (placeObj.date && placeObj.date.seconds) {
+      const eventDate = new Date(placeObj.date.seconds * 1000);
+      const currentDate = new Date();
+      const diffMonths =
+        (eventDate.getFullYear() - currentDate.getFullYear()) * 12 +
+        (eventDate.getMonth() - currentDate.getMonth());
+
+      if (timeRange === "all") {
+        return true;
+      }
+      return diffMonths <= timeRange;
+    }
+    return false;
+  });
   //this call firestore function
   async function getDestinations(db) {
     try {
@@ -103,7 +139,9 @@ function App() {
         });
       });
       setBackendResponse(response);
+
       console.log("backendResponse", response);
+      console.log("user loc", userLocation);
     } catch (e) {
       console.error("Error getting documents: ", e);
     }
@@ -112,11 +150,21 @@ function App() {
   async function run() {
     alert("run is running", mess);
     getDestinations(db);
-    const prompt = `${mess} just generate me json of keywords from the given text of place and destination in this way "{
-  "place": "Savordem",
-  "destination": "Ponda"
+    const prompt = `Extract the place (starting location) and destination (ending location) from the given text "${mess}" and return a JSON object in the following format:
+{ 
+  "place": "Ponda",
+  "destination": "Sanguem"
 }
-"`;
+If the place is not mentioned, return:
+{ 
+  "place": "Not", 
+  "destination": "Sanguem"
+}
+Rules:
+The "place" is where the user is currently located.
+The "destination" is where the user wants to go.
+If the place is missing, set "place": "Not".
+Extract locations even from vague, informal sentences.`;
     const result = await geminiModel.generateContent(prompt);
 
     const response = result.response;
@@ -124,30 +172,16 @@ function App() {
     const txt = text.slice(7, -4);
     console.log(`trimmed text = ${txt}`);
     const obj = JSON.parse(txt);
-    setplace(obj.place);
+    setplace(() => {
+      return obj.place;
+    });
     setdest(obj.destination);
-    console.log(obj);
+    if (obj.place === "Not") {
+      setplace(userLocationPlace);
+    }
+    console.log("place is finaaaaaaaaaaaaaaaaaaaaaaaal", place);
   }
 
-  {
-    /* <form>
-        <input
-          type="text"
-          placeholder="enter text"
-          onChange={(e) => setmess(e.target.value)}
-        />
-        <button
-          onClick={(e) => {
-            e.preventDefault();
-            alert(mess);
-            run();
-            console.log("run is running");
-          }}
-        >
-          SUBMIT
-        </button>
-      </form> */
-  }
   return (
     <div className="app-container">
       <div className="form-container">
@@ -168,6 +202,13 @@ function App() {
             SUBMIT
           </button>
         </form>
+        <div className="filter-buttons">
+          <button onClick={() => setTimeRange(1)}>1 Month</button>
+          <button onClick={() => setTimeRange(2)}>2 Months</button>
+          <button onClick={() => setTimeRange(5)}>5 Months</button>
+          <button onClick={() => setTimeRange(10)}>10 Months</button>
+          <button onClick={() => setTimeRange("all")}>All</button>
+        </div>
       </div>
       <div className="info-container">
         <p>
@@ -175,13 +216,15 @@ function App() {
           {Distance} and the duration is {Duration}
         </p>
       </div>
+
       <button
         className="tap-button"
         onClick={async () => {
           console.log(`place = ${place} destination = ${dest}`);
+          console.log(`the place and destination will be ${place}`);
           const directionsService = new google.maps.DirectionsService();
           const results = await directionsService.route({
-            origin: userLocation ? userLocation : `${place} goa`,
+            origin: place == "not" ? userLocation : `${place} goa`,
             destination: `${dest} goa`,
 
             travelMode: google.maps.TravelMode.DRIVING,
@@ -203,7 +246,7 @@ function App() {
             onLoad={onLoad}
             onUnmount={onUnmount}
           >
-            {backendResponse.map((placeObj, idx) => {
+            {filteredFestivals.map((placeObj, idx) => {
               console.log("backendResponse", backendResponse);
               return (
                 <Marker
@@ -211,6 +254,10 @@ function App() {
                   onClick={() => console.log("clicked")}
                   onMouseOver={() => {
                     setActiveMarker(idx + 10000);
+                  }}
+                  icon={{
+                    url: "https://maps.google.com/mapfiles/ms/icons/yellow-dot.png", // URL to your custom icon
+                    scaledSize: new window.google.maps.Size(40, 40), // Adjust the size if needed
                   }}
                   onMouseOut={() => setActiveMarker(null)}
                   position={{
@@ -223,6 +270,17 @@ function App() {
                       <div>
                         <h3>{placeObj.name}</h3>
                         <p>{placeObj.description}</p>
+                        <p>
+                          date:
+                          {placeObj.date && (
+                            <span>
+                              {" "}
+                              {new Date(
+                                placeObj.date.seconds * 1000
+                              ).toLocaleString()}
+                            </span>
+                          )}
+                        </p>
                       </div>
                     </InfoWindow>
                   )}
