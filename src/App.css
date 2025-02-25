@@ -1,6 +1,55 @@
 /* Global font style */
 * {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+:root {
+  --background-color: #ffffff;
+  --text-color: #333333;
+  --card-background: #f5f5f5;
+  --border-color: #dddddd;
+}
+
+:root.dark-mode {
+  --background-color: #1a1a1a;
+  --text-color: #ffffff;
+  --card-background: #2d2d2d;
+  --border-color: #404040;
+}
+
+body {
+  background-color: var(--background-color);
+  color: var(--text-color);
+  transition: all 0.3s ease;
+}
+
+.info-container {
+  background-color: var(--card-background);
+  border: 1px solid var(--border-color);
+}
+
+.info-window {
+  background-color: var(--card-background);
+  color: var(--text-color);
+}
+
+/* Add these styles for the toggle button */
+.toggle-button {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 10px;
+  border-radius: 50%;
+  border: none;
+  background-color: var(--card-background);
+  color: var(--text-color);
+  cursor: pointer;
+  z-index: 1000;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .app-container {
@@ -8,7 +57,7 @@
   flex-direction: column;
   align-items: center;
   padding: 1rem;
-  max-width: 100%;
+  max-width: 700px;
   margin: 0 auto;
   background: #f8fafc;
   min-height: 100vh;
@@ -72,9 +121,9 @@
 
 .submit-button,
 .tap-button {
-  width: 85%;
+  width: 600px;
   padding: 1rem;
-  background: #3b82f6;
+  background: #0bee72;
   color: white;
   border: none;
   border-radius: 8px;
@@ -82,9 +131,12 @@
   font-size: 1rem;
   cursor: pointer;
   transition: all 0.3s;
-  margin-bottom: 0.5rem ;
+  margin-bottom: 0.5rem;
 }
 
+.submit-button {
+  background: #3b82f6;
+}
 .submit-button:hover,
 .tap-button:hover {
   background: #2563eb;
@@ -190,7 +242,7 @@
 @media (min-width: 1024px) {
   .app-container {
     padding: 3rem;
-    max-width: 1200px;
+    max-width: 700px;
   }
 
   .map-container {

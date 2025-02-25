@@ -3,6 +3,7 @@ import { geminiModel } from "./firebase";
 import { getFirestore, collection, addDoc, getDocs } from "firebase/firestore";
 import { db } from "./firebase";
 import "./App.css";
+import toast, { Toaster } from "react-hot-toast";
 import {
   GoogleMap,
   useJsApiLoader,
@@ -155,7 +156,8 @@ function App() {
   }
 
   async function run() {
-    alert("run is running", mess);
+    // alert("run is running", mess);
+    toast.success("Successfully sent to the Vertex api");
     getDestinations(db);
     const prompt = `Extract the place (starting location) and destination (ending location) from the given text "${mess}" and return a JSON object in the following format:
 { 
@@ -191,6 +193,9 @@ Extract locations even from vague, informal sentences.`;
 
   return (
     <div className="app-container">
+      <div>
+        <Toaster />
+      </div>
       <button className="toggle-button" onClick={toggleDarkMode}>
         {darkMode ? <FaSun /> : <FaMoon />}
       </button>
