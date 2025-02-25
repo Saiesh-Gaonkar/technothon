@@ -11,6 +11,7 @@ import {
   InfoWindow,
   DirectionsRenderer,
 } from "@react-google-maps/api";
+import { FaSun, FaMoon } from "react-icons/fa";
 
 const containerStyle = {
   width: "100%",
@@ -39,6 +40,12 @@ function App() {
   const [userLocationDefined, setuserLocationDefined] = useState(null);
   const [userLocationPlace, setUserLocationPlace] = useState(""); // Store the place name of user location
   const [test, settest] = useState(null);
+  const [darkMode, setDarkMode] = useState(false);
+
+  const toggleDarkMode = () => {
+    setDarkMode(!darkMode);
+    document.body.classList.toggle("dark-mode", !darkMode);
+  };
 
   const reverseGeocodeLocation = (location) => {
     const geocoder = new window.google.maps.Geocoder();
@@ -184,6 +191,9 @@ Extract locations even from vague, informal sentences.`;
 
   return (
     <div className="app-container">
+      <button className="toggle-button" onClick={toggleDarkMode}>
+        {darkMode ? <FaSun /> : <FaMoon />}
+      </button>
       <div className="form-container">
         <form>
           <input
@@ -269,40 +279,45 @@ Extract locations even from vague, informal sentences.`;
             <Marker
               position={userLocation}
               icon={{
-                url: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png", // URL to your custom icon
-                scaledSize: new window.google.maps.Size(40, 40), // Adjust the size if needed
+                url: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png",
+                scaledSize: new window.google.maps.Size(40, 40),
               }}
             />
 
-            {filteredFestivals.map((placeObj, idx) => {
-              console.log("backendResponse", backendResponse);
-              return (
-                <Marker
-                  key={idx + 10000}
-                  onClick={() => console.log("clicked")}
-                  onMouseOver={() => {
-                    setActiveMarker(idx + 10000);
-                  }}
-                  icon={{
-                    url: "https://maps.google.com/mapfiles/ms/icons/yellow-dot.png", // URL to your custom icon
-                    scaledSize: new window.google.maps.Size(40, 40), // Adjust the size if needed
-                  }}
-                  onMouseOut={() => setActiveMarker(null)}
-                  position={{
-                    lat: parseFloat(placeObj.lat),
-                    lng: parseFloat(placeObj.lng),
-                  }}
-                >
-                  {activeMarker === idx + 10000 && (
-                    <InfoWindow onCloseClick={() => setActiveMarker(null)}>
-                      <div>
+            {filteredFestivals.map((placeObj, idx) => (
+              <Marker
+                key={idx + 10000}
+                onClick={() => console.log("clicked")}
+                onMouseOver={() => setActiveMarker(idx + 10000)}
+                icon={{
+                  url: "https://maps.google.com/mapfiles/ms/icons/yellow-dot.png",
+                  scaledSize: new window.google.maps.Size(40, 40),
+                }}
+                onMouseOut={() => setActiveMarker(null)}
+                position={{
+                  lat: parseFloat(placeObj.lat),
+                  lng: parseFloat(placeObj.lng),
+                }}
+              >
+                {activeMarker === idx + 10000 && (
+                  <InfoWindow onCloseClick={() => setActiveMarker(null)}>
+                    <div className="info-window">
+                      <img
+                        src={placeObj.imageUrl || "default-image-url.jpg"}
+                        alt={placeObj.name}
+                        className="info-window-image"
+                      />
+                      <div className="info-window-text">
                         <h3>{placeObj.name}</h3>
                         <p>{placeObj.description}</p>
+                        <div className="info-window-rating">
+                          <span className="star">★</span>
+                          <span>{placeObj.rating || "N/A"}</span>
+                        </div>
                         <p>
-                          date:
+                          Date:{" "}
                           {placeObj.date && (
                             <span>
-                              {" "}
                               {new Date(
                                 placeObj.date.seconds * 1000
                               ).toLocaleString()}
@@ -310,41 +325,44 @@ Extract locations even from vague, informal sentences.`;
                           )}
                         </p>
                       </div>
-                    </InfoWindow>
-                  )}
-                </Marker>
-              );
-            })}
+                    </div>
+                  </InfoWindow>
+                )}
+              </Marker>
+            ))}
 
-            {/* displaying all the nearby location on the route */}
-            {placesOnRoute.map((placeObj, idx) => {
-              console.log("placeObj", placeObj);
-              return (
-                <Marker
-                  key={idx}
-                  onClick={() => console.log("clicked")}
-                  onMouseOver={() => setActiveMarker(idx)}
-                  onMouseOut={() => setActiveMarker(null)}
-                  position={placeObj.geometry.location}
-                >
-                  {activeMarker === idx && (
-                    <InfoWindow onCloseClick={() => setActiveMarker(null)}>
-                      <div>
+            {placesOnRoute.map((placeObj, idx) => (
+              <Marker
+                key={idx}
+                onClick={() => console.log("clicked")}
+                onMouseOver={() => setActiveMarker(idx)}
+                onMouseOut={() => setActiveMarker(null)}
+                position={placeObj.geometry.location}
+              >
+                {activeMarker === idx && (
+                  <InfoWindow onCloseClick={() => setActiveMarker(null)}>
+                    <div className="info-window">
+                      <img
+                        src={
+                          placeObj.photos && placeObj.photos.length > 0
+                            ? placeObj.photos[0].getUrl()
+                            : "default-image-url.jpg"
+                        }
+                        alt={placeObj.name}
+                        className="info-window-image"
+                      />
+                      <div className="info-window-text">
                         <h3>{placeObj.name}</h3>
-                        <h3>{placeObj.rating}</h3>
-                        {placeObj.photos && placeObj.photos.length > 0 && (
-                          <img
-                            src={placeObj.photos[0].getUrl()}
-                            alt={placeObj.name}
-                            style={{ width: "100px", height: "100px" }}
-                          />
-                        )}
+                        <div className="info-window-rating">
+                          <span className="star">★</span>
+                          <span>{placeObj.rating || "N/A"}</span>
+                        </div>
                       </div>
-                    </InfoWindow>
-                  )}
-                </Marker>
-              );
-            })}
+                    </div>
+                  </InfoWindow>
+                )}
+              </Marker>
+            ))}
 
             {directionsResponse && (
               <DirectionsRenderer directions={directionsResponse} />
