@@ -115,4 +115,4 @@ The application uses Firebase for data storage. The database structure is as fol
 - **events**: Contains festival and event information
   - Fields: name, description, date, lat, lng, imageUrl, rating
 
-## Project Structure
+   
