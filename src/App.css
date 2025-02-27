@@ -53,20 +53,20 @@ body {
 }
 
 .app-container {
+  min-height: 100vh;
+  background: linear-gradient(to bottom, #f0f9ff, #e0f2fe);
+  padding: 1rem;
+  transition: all 0.3s ease;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 1rem;
-  max-width: 700px;
+  width: 100%;
+  max-width: 1200px;
   margin: 0 auto;
-  background: #f8fafc;
-  min-height: 100vh;
-  transition: background 0.3s, color 0.3s;
 }
 
-.dark-mode .app-container {
-  background: #1e293b;
-  color: #f8fafc;
+.dark-mode.app-container {
+  background: linear-gradient(to bottom, #0f172a, #1e293b);
 }
 
 .toggle-button {
@@ -88,7 +88,7 @@ body {
 .form-container,
 .info-container {
   width: 100%;
-  max-width: 600px;
+  max-width: 800px;
   background: white;
   padding: 1.5rem;
   border-radius: 12px;
@@ -121,7 +121,8 @@ body {
 
 .submit-button,
 .tap-button {
-  width: 600px;
+  width: 100%;
+  max-width: 800px;
   padding: 1rem;
   background: #0bee72;
   color: white;
@@ -210,7 +211,7 @@ body {
 
 .map-container {
   width: 100%;
-  max-width: 600px;
+  max-width: 800px;
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
@@ -293,4 +294,528 @@ body {
   margin-right: 0.25rem;
   font-size: 1rem;
   color: #fbbf24; /* Gold color for stars */
+}
+
+.auth-container {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  z-index: 1001;
+  background: white;
+  padding: 5px;
+  border-radius: 20px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.auth-button {
+  padding: 10px 20px;
+  border-radius: 20px;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 14px;
+  min-width: 150px;
+}
+
+.auth-button.login {
+  background-color: #4285f4;
+  color: white;
+}
+
+.auth-button.logout {
+  background-color: #dc3545;
+  color: white;
+}
+
+.auth-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.dark-mode .auth-container {
+  background: #334155;
+}
+
+/* Update SOS button positioning for map integration */
+.sos-container {
+  position: absolute;
+  left: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+/* Dark mode support for auth buttons */
+.dark-mode .auth-button.login {
+  background-color: #5c9cf5;
+}
+
+.dark-mode .auth-button.logout {
+  background-color: #e4505f;
+}
+
+.tap-button {
+  margin-top: 1rem;
+  padding: 0.75rem 1.5rem;
+  background-color: #4299e1;
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.tap-button:disabled {
+  background-color: #a0aec0;
+  cursor: not-allowed;
+}
+
+.tap-button:hover:not(:disabled) {
+  background-color: #3182ce;
+  transform: translateY(-1px);
+}
+
+.info-container {
+  margin: 1rem 0;
+  padding: 1rem;
+  background-color: #f7fafc;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.dark-mode .info-container {
+  background-color: #2d3748;
+}
+
+.info-text {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.info-label {
+  font-weight: 600;
+  color: #4a5568;
+}
+
+.dark-mode .info-label {
+  color: #e2e8f0;
+}
+
+.route-stop {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem;
+  background: #f8fafc;
+  border-radius: 8px;
+  margin-bottom: 0.75rem;
+}
+
+.dark-mode .route-stop {
+  background: #2d3748;
+}
+
+.stop-number {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #3b82f6;
+  color: white;
+  border-radius: 50%;
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.tourist-attractions {
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.dark-mode .tourist-attractions {
+  border-top-color: #4a5568;
+}
+
+.tourist-attractions h3 {
+  margin-bottom: 1rem;
+  font-size: 1.25rem;
+  color: #2d3748;
+}
+
+.dark-mode .tourist-attractions h3 {
+  color: #e2e8f0;
+}
+
+.attractions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.attraction-card {
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s;
+}
+
+.dark-mode .attraction-card {
+  background: #2d3748;
+}
+
+.attraction-card:hover {
+  transform: translateY(-2px);
+}
+
+.attraction-card h4 {
+  padding: 0.75rem;
+  margin: 0;
+  font-size: 1rem;
+  color: #2d3748;
+}
+
+.dark-mode .attraction-card h4 {
+  color: #e2e8f0;
+}
+
+.attraction-image {
+  width: 100%;
+  height: 150px;
+  object-fit: cover;
+}
+
+.attraction-rating {
+  padding: 0.75rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.875rem;
+  color: #4a5568;
+}
+
+.dark-mode .attraction-rating {
+  color: #a0aec0;
+}
+
+.floating-attractions {
+  position: absolute;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  width: 300px;
+  max-height: 80vh;
+  overflow-y: auto;
+  z-index: 1000;
+  padding: 1rem;
+  transition: all 0.3s ease;
+}
+
+.dark-mode .floating-attractions {
+  background: #1e293b;
+}
+
+.attractions-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.dark-mode .attractions-header {
+  border-bottom-color: #4a5568;
+}
+
+.attractions-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #2d3748;
+  margin: 0;
+}
+
+.dark-mode .attractions-title {
+  color: #e2e8f0;
+}
+
+.minimize-button {
+  background: none;
+  border: none;
+  color: #4a5568;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.dark-mode .minimize-button {
+  color: #e2e8f0;
+}
+
+.minimize-button:hover {
+  background: #f7fafc;
+  color: #2d3748;
+}
+
+.dark-mode .minimize-button:hover {
+  background: #2d3748;
+  color: #fff;
+}
+
+.attraction-item {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem;
+  border-radius: 8px;
+  margin-bottom: 0.5rem;
+  background: #f8fafc;
+  cursor: pointer;
+  transition: all 0.2s;
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.dark-mode .attraction-item {
+  background: #2d3748;
+}
+
+.attraction-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.attraction-thumbnail {
+  width: 60px;
+  height: 60px;
+  border-radius: 8px;
+  object-fit: cover;
+  margin-right: 1rem;
+}
+
+.attraction-info {
+  flex: 1;
+}
+
+.attraction-name {
+  font-weight: 600;
+  color: #2d3748;
+  margin-bottom: 0.25rem;
+  font-size: 0.875rem;
+}
+
+.dark-mode .attraction-name {
+  color: #e2e8f0;
+}
+
+.attraction-rating {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  color: #4a5568;
+}
+
+.dark-mode .attraction-rating {
+  color: #a0aec0;
+}
+
+.minimized {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.minimized .attractions-content {
+  display: none;
+}
+
+.minimized .minimize-button {
+  transform: rotate(180deg);
+}
+
+/* Header Section */
+.header {
+  text-align: center;
+  margin-bottom: 2rem;
+  padding: 2rem 0;
+}
+
+.header h1 {
+  font-size: 2.5rem;
+  color: #0369a1;
+  margin-bottom: 0.5rem;
+  font-weight: 700;
+}
+
+.dark-mode .header h1 {
+  color: #38bdf8;
+}
+
+.header p {
+  color: #64748b;
+  font-size: 1.1rem;
+}
+
+/* Form Container */
+.form-container {
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto 2rem;
+  padding: 1.5rem;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.dark-mode .form-container {
+  background: #1e293b;
+}
+
+/* Input and Buttons */
+.input-field {
+  width: 100%;
+  padding: 1rem;
+  font-size: 1rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  margin-bottom: 1rem;
+  transition: all 0.3s;
+}
+
+.input-field:focus {
+  border-color: #0ea5e9;
+  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
+}
+
+.submit-button {
+  width: 100%;
+  padding: 1rem;
+  background: #0ea5e9;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.submit-button:hover {
+  background: #0284c7;
+  transform: translateY(-1px);
+}
+
+/* Filter Buttons */
+.filter-buttons {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 1rem;
+}
+
+.filter-button {
+  padding: 0.75rem 1rem;
+  border: none;
+  border-radius: 8px;
+  background: #f1f5f9;
+  color: #475569;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.filter-button:hover {
+  background: #e2e8f0;
+}
+
+.filter-button.active {
+  background: #0ea5e9;
+  color: white;
+}
+
+/* Map Container */
+.map-container {
+  width: 100%;
+  max-width: 800px;
+  height: 600px;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  margin: 0 auto 2rem;
+}
+
+/* Info Window */
+.info-window {
+  padding: 1rem;
+  max-width: 300px;
+}
+
+.info-window-image {
+  width: 100%;
+  height: 150px;
+  object-fit: cover;
+  border-radius: 8px;
+  margin-bottom: 0.5rem;
+}
+
+.info-window h3 {
+  color: #0ea5e9;
+  margin: 0 0 0.5rem 0;
+}
+
+/* Responsive Design */
+@media (max-width: 840px) {
+  .app-container {
+    padding: 0.5rem;
+  }
+
+  .form-container,
+  .info-container,
+  .map-container,
+  .submit-button,
+  .tap-button {
+    max-width: 95%;
+  }
+
+  .floating-attractions,
+  .sos-container {
+    position: fixed;
+  }
+}
+
+@media (max-width: 480px) {
+  .header h1 {
+    font-size: 1.5rem;
+  }
+
+  .form-container,
+  .info-container {
+    padding: 1rem;
+  }
+
+  .map-container {
+    height: 400px;
+  }
 }

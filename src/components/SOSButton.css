@@ -1,0 +1,345 @@
+.sos-container {
+  position: fixed;
+  left: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 1000;
+}
+
+.sos-button {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background-color: #ff4444;
+  color: white;
+  border: none;
+  font-size: 0.9rem;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(255, 68, 68, 0.4);
+  transition: all 0.3s ease;
+  animation: pulse 2s infinite;
+}
+
+.sos-button:hover {
+  transform: scale(1.1);
+  background-color: #ff0000;
+}
+
+.sos-button.active {
+  background-color: #ff0000;
+  animation: emergency-pulse 1s infinite;
+}
+
+.sos-button.requesting {
+  background-color: #718096;
+  animation: none;
+  cursor: wait;
+}
+
+.nearby-alerts {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 1rem;
+  background: white;
+  border-radius: 12px;
+  padding: 1rem;
+  width: 250px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.dark-mode .nearby-alerts {
+  background: #1e293b;
+  color: white;
+}
+
+.alert-card {
+  padding: 0.75rem;
+  background: #f8fafc;
+  border-radius: 8px;
+  margin-bottom: 0.5rem;
+  position: relative;
+}
+
+.dark-mode .alert-card {
+  background: #2d3748;
+}
+
+.close-button {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #64748b;
+  color: white;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.close-button:hover {
+  background: #475569;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 68, 68, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(255, 68, 68, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 68, 68, 0);
+  }
+}
+
+@keyframes emergency-pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.sos-info-window {
+  padding: 15px;
+  max-width: 200px;
+}
+
+.sos-info-window h3 {
+  color: #dc3545;
+  margin: 0 0 10px 0;
+  font-size: 16px;
+}
+
+.sos-info-window p {
+  margin: 5px 0;
+  font-size: 14px;
+}
+
+.sos-error {
+  position: absolute;
+  bottom: 100%;
+  right: 0;
+  background: #fee2e2;
+  color: #dc2626;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+  white-space: nowrap;
+}
+
+.location-prompt {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1100;
+  max-width: 90%;
+  width: 400px;
+  text-align: center;
+}
+
+.dark-mode .location-prompt {
+  background: #2d3748;
+  color: white;
+}
+
+.location-prompt button {
+  margin-top: 1rem;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  background: #4299e1;
+  color: white;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.location-prompt button:hover {
+  background: #3182ce;
+}
+
+/* Add new styles for the side panel */
+.sos-side-panel {
+  position: fixed;
+  left: 80px; /* Position it next to the SOS button */
+  top: 50%;
+  transform: translateY(-50%);
+  background: white;
+  border-radius: 12px;
+  padding: 1rem;
+  width: 300px;
+  max-height: 80vh;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 999;
+  overflow-y: auto;
+  transition: all 0.3s ease;
+}
+
+.dark-mode .sos-side-panel {
+  background: #1e293b;
+  color: white;
+}
+
+.sos-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.dark-mode .sos-panel-header {
+  border-bottom-color: #4a5568;
+}
+
+.sos-panel-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #dc2626;
+}
+
+.send-sos-button {
+  background: #dc2626;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  margin-bottom: 1rem;
+  width: 100%;
+}
+
+.send-sos-button:hover {
+  background: #b91c1c;
+}
+
+.send-sos-button:disabled {
+  background: #718096;
+  cursor: not-allowed;
+}
+
+.close-panel-button {
+  background: none;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.close-panel-button:hover {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.dark-mode .close-panel-button:hover {
+  background: #2d3748;
+  color: #e2e8f0;
+}
+
+/* Add these media queries at the end */
+@media (max-width: 768px) {
+  .sos-container {
+    position: fixed;
+    left: 0;
+    top: auto;
+    bottom: 0;
+    transform: none;
+    width: 100%;
+    background: white;
+    padding: 10px;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+    display: flex;
+    justify-content: center;
+    z-index: 1000;
+  }
+
+  .dark-mode .sos-container {
+    background: #1e293b;
+  }
+
+  .sos-button {
+    width: 100%;
+    max-width: 200px;
+    height: 40px;
+    border-radius: 20px;
+    margin: 0 auto;
+  }
+
+  .sos-side-panel {
+    position: fixed;
+    left: 0;
+    bottom: 60px;
+    top: auto;
+    transform: none;
+    width: 100%;
+    max-height: 60vh;
+    border-radius: 20px 20px 0 0;
+  }
+
+  .alert-card {
+    padding: 10px;
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .alert-card p {
+    margin: 2px 0;
+    font-size: 0.9rem;
+  }
+
+  /* Simplified info for mobile */
+  .alert-card p:not(:first-child) {
+    display: none;
+  }
+
+  .view-on-map-button {
+    padding: 6px 12px;
+    font-size: 0.8rem;
+  }
+
+  .send-sos-button {
+    max-width: 200px;
+    margin: 10px auto;
+  }
+}
+
+@media (max-width: 480px) {
+  .sos-side-panel {
+    left: 60px;
+    width: 250px;
+  }
+
+  .location-prompt {
+    width: 90%;
+    padding: 1rem;
+  }
+} 

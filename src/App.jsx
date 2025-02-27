@@ -1,5 +1,4 @@
 import { useState, useCallback, useEffect } from "react";
-import { geminiModel } from "./firebase";
 import { getFirestore, collection, addDoc, getDocs } from "firebase/firestore";
 import { db } from "./firebase";
 import "./App.css";
@@ -13,6 +12,8 @@ import {
   DirectionsRenderer,
 } from "@react-google-maps/api";
 import { FaSun, FaMoon } from "react-icons/fa";
+import SOSButton from './components/SOSButton';
+import UserLogin from './components/UserLogin';
 
 const containerStyle = {
   width: "100%",
@@ -25,6 +26,23 @@ const center = {
 };
 
 const currentMonth = new Date().getMonth();
+
+const isValidLocation = (loc) => {
+  return loc && typeof loc === 'string' && loc.trim() !== '';
+};
+
+const formatLocation = (loc) => {
+  if (!loc) return null;
+  return loc.trim().toLowerCase().includes('goa') ? loc : `${loc}, Goa, India`;
+};
+
+// Add this simple helper function to clean location names
+const cleanLocationText = (text) => {
+  if (!text) return '';
+  return text
+    .replace(/, Goa(?:, India)?$/i, '')
+    .trim();
+};
 
 function App() {
   const [mess, setmess] = useState("");
@@ -42,6 +60,14 @@ function App() {
   const [userLocationPlace, setUserLocationPlace] = useState(""); // Store the place name of user location
   const [test, settest] = useState(null);
   const [darkMode, setDarkMode] = useState(false);
+  const [user, setUser] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isMapLoading, setIsMapLoading] = useState(true);
+  const [mapError, setMapError] = useState(null);
+  const [destinations, setDestinations] = useState([]);
+  const [currentRouteIndex, setCurrentRouteIndex] = useState(0);
+  const [waypoints, setWaypoints] = useState([]);
+  const [isAttractionsMinimized, setIsAttractionsMinimized] = useState(false);
 
   const toggleDarkMode = () => {
     setDarkMode(!darkMode);
@@ -62,30 +88,35 @@ function App() {
     });
   };
 
-  const { isLoaded } = useJsApiLoader({
+  const { isLoaded, loadError } = useJsApiLoader({
     googleMapsApiKey: "AIzaSyB2rs0uDLILULcxJmljxKGUBHh9uoY-Wt8",
     libraries: ["places"],
   });
 
   useEffect(() => {
-    // Get the user's current location
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
+    if (!isLoaded) return;
+
+    const getUserLocation = async () => {
+      try {
+        const position = await new Promise((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject);
+        });
+
           const location = {
             lat: position.coords.latitude,
             lng: position.coords.longitude,
           };
           setUserLocation(location);
+      } catch (error) {
+        console.log('Location access not granted or error:', error);
+        // Don't set error, just continue without location
+      } finally {
+        setIsMapLoading(false);
+      }
+    };
 
-          reverseGeocodeLocation(location);
-        },
-        (error) => {
-          console.error("Error getting user's location: ", error);
-        }
-      );
-    }
-  }, []);
+    getUserLocation();
+  }, [isLoaded]);
 
   console.log("user is staying at", userLocationPlace);
   const [map, setMap] = useState(null);
@@ -155,64 +186,265 @@ function App() {
     }
   }
 
-  async function run() {
-    // alert("run is running", mess);
-    toast.success("Successfully sent to the Vertex api");
-    getDestinations(db);
-    const prompt = `Extract the place (starting location) and destination (ending location) from the given text "${mess}" and return a JSON object in the following format:
-{ 
-  "place": "Ponda",
-  "destination": "Sanguem"
-}
-If the place is not mentioned, return:
-{ 
-  "place": "Not", 
-  "destination": "Sanguem"
-}
-Rules:
-The "place" is where the user is currently located.
-The "destination" is where the user wants to go.
-If the place is missing, set "place": "Not".
-Extract locations even from vague, informal sentences.`;
-    const result = await geminiModel.generateContent(prompt);
+  const extractLocations = (text) => {
+    // Clean up the text
+    const cleanText = text.toLowerCase()
+      .replace(/i want to go to|take me to|how to reach|route to/g, '')
+      .replace(/then|after that|and then|next/g, ',')
+      .trim();
 
-    const response = result.response;
-    const text = response.text();
-    const txt = text.slice(7, -4);
-    console.log(`trimmed text = ${txt}`);
-    const obj = JSON.parse(txt);
-    setplace(() => {
-      return obj.place;
-    });
-    setdest(obj.destination);
-    if (obj.place === "Not") {
-      setplace(userLocationPlace);
+    // Split by commas or 'to' to get multiple destinations
+    const locations = cleanText.split(/,|\sto\s/)
+      .map(loc => loc.trim())
+      .filter(loc => loc.length > 0);
+
+    // Check if text contains "from" or "i am at" to get starting point
+    const fromMatch = text.toLowerCase().match(/(?:from|i am at)\s+([^,]+)/);
+    const startingPoint = fromMatch ? fromMatch[1].trim() : 'current';
+
+    if (locations.length === 0) return null;
+
+    return {
+      place: startingPoint,
+      destinations: locations
+    };
+  };
+
+  async function run() {
+    try {
+      toast.loading('Planning your route...');
+    getDestinations(db);
+      
+      const locationInfo = extractLocations(mess);
+      if (!locationInfo) {
+        throw new Error('Could not understand the destinations');
+      }
+
+      // Set starting point
+      if (locationInfo.place === 'current') {
+        if (userLocation) {
+          setplace(`${userLocation.lat},${userLocation.lng}`);
+        } else {
+          setplace('Navelim, Goa'); // Default to Navelim if no location
+        }
+      } else {
+        setplace(locationInfo.place + " Goa");
+      }
+      
+      // Set destinations
+      const formattedDestinations = locationInfo.destinations.map(dest => dest + " Goa");
+      setDestinations(formattedDestinations);
+      setdest(formattedDestinations[0]); // Set first destination
+      
+      // Create waypoints for remaining destinations
+      const waypointsList = formattedDestinations.slice(1).map(dest => ({
+        location: dest,
+        stopover: true
+      }));
+      setWaypoints(waypointsList);
+      
+      toast.dismiss();
+      toast.success('Route planned! Click "Show Route" to view.');
+    } catch (error) {
+      console.error('Error in run function:', error);
+      toast.dismiss();
+      toast.error(error.message || 'Failed to process your request');
     }
-    console.log("place is finaaaaaaaaaaaaaaaaaaaaaaaal", place);
+  }
+
+  const calculateRoute = async () => {
+    if (!place || destinations.length === 0) {
+      toast.error('Please enter starting point and at least one destination');
+      return;
+    }
+
+    try {
+      toast.loading('Calculating route and finding attractions...');
+      const directionsService = new google.maps.DirectionsService();
+      
+      const origin = place.includes(',') ? place : `${place}, Goa, India`;
+      const destination = `${destinations[destinations.length - 1]}, Goa, India`;
+
+      const results = await directionsService.route({
+        origin: origin,
+        destination: destination,
+        waypoints: waypoints,
+        optimizeWaypoints: true,
+        travelMode: google.maps.TravelMode.DRIVING,
+      });
+
+      setDirectionsResponse(results);
+      
+      // Calculate total distance and duration
+      let totalDistance = 0;
+      let totalDuration = 0;
+      results.routes[0].legs.forEach(leg => {
+        totalDistance += leg.distance.value;
+        totalDuration += leg.duration.value;
+      });
+
+      setDistance(`${(totalDistance / 1000).toFixed(1)} km`);
+      setDuration(formatDuration(totalDuration));
+
+      // Find tourist attractions along the route
+      if (map) {
+        const bounds = results.routes[0].bounds;
+        const service = new google.maps.places.PlacesService(map);
+        
+        const request = {
+          bounds: bounds,
+          type: ['tourist_attraction'],
+          rankBy: google.maps.places.RankBy.RATING
+        };
+
+        service.nearbySearch(request, (results, status) => {
+          if (status === google.maps.places.PlacesServiceStatus.OK) {
+            // Sort by rating and limit to top 6
+            const sortedPlaces = results
+              .sort((a, b) => (b.rating || 0) - (a.rating || 0))
+              .slice(0, 6);
+            setPlacesOnRoute(sortedPlaces);
+          }
+        });
+      }
+
+      // Adjust map to show the entire route
+      if (map && results.routes[0].bounds) {
+        map.fitBounds(results.routes[0].bounds);
+      }
+
+      toast.dismiss();
+      toast.success('Route and attractions found!');
+    } catch (error) {
+      console.error('Direction Service Error:', error);
+      toast.dismiss();
+      toast.error('Could not calculate route. Please check the locations and try again.');
+    }
+  };
+
+  // Helper function to format duration
+  const formatDuration = (seconds) => {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    return hours > 0 ? `${hours} hr ${minutes} min` : `${minutes} min`;
+  };
+
+  const handleUserLogin = (userData) => {
+    try {
+      setUser(userData);
+      localStorage.setItem('user', JSON.stringify(userData));
+      toast.success(`Welcome ${userData.name}!`);
+    } catch (error) {
+      console.error('Error in handleUserLogin:', error);
+      toast.error('Failed to complete login');
+    }
+  };
+
+  // Load saved user data
+  useEffect(() => {
+    try {
+      const savedUser = localStorage.getItem('user');
+      if (savedUser) {
+        setUser(JSON.parse(savedUser));
+      }
+    } catch (error) {
+      console.error('Error loading saved user:', error);
+      localStorage.removeItem('user');
+    }
+  }, []);
+
+  useEffect(() => {
+    // Check if Google Maps is loaded and user location is available
+    if (isLoaded && userLocation) {
+      setIsLoading(false);
+    }
+  }, [isLoaded, userLocation]);
+
+  const handleAttractionClick = (attraction) => {
+    if (map) {
+      map.panTo(attraction.geometry.location);
+      map.setZoom(15);
+      setActiveMarker(attraction.place_id);
+    }
+  };
+
+  if (loadError) {
+    return (
+      <div style={{ 
+        padding: '20px', 
+        textAlign: 'center', 
+        color: 'red' 
+      }}>
+        Error loading maps. Please try again later.
+      </div>
+    );
+  }
+
+  if (isMapLoading) {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        flexDirection: 'column',
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh',
+        gap: '1rem',
+        background: darkMode ? '#1a1a1a' : '#ffffff',
+        color: darkMode ? '#ffffff' : '#1a1a1a'
+      }}>
+        <div>Loading Maps...</div>
+        <div style={{ fontSize: '0.9rem' }}>Location access is optional</div>
+      </div>
+    );
+  }
+
+  if (mapError) {
+    return (
+      <div style={{ 
+        padding: '20px', 
+        textAlign: 'center', 
+        color: 'red' 
+      }}>
+        {mapError}
+      </div>
+    );
   }
 
   return (
-    <div className="app-container">
+    <div className={`app-container ${darkMode ? 'dark-mode' : ''}`}>
+      <div className="header">
+        <h1>Explore Goa</h1>
+        <p>Discover the beauty of beaches, culture, and adventure</p>
+      </div>
       <div>
         <Toaster />
       </div>
       <button className="toggle-button" onClick={toggleDarkMode}>
         {darkMode ? <FaSun /> : <FaMoon />}
       </button>
+      {!user ? (
+        <UserLogin onLogin={handleUserLogin} />
+      ) : (
+        <>
       <div className="form-container">
-        <form>
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              if (!mess.trim()) {
+                toast.error('Please enter your destination');
+                return;
+              }
+              run();
+            }}>
           <input
             className="input-field"
             type="text"
-            placeholder="Where would you like to go?"
+                placeholder="Tell me your travel plan (e.g., 'I am at Navelim, want to go to Quepem then Ponda')"
+                value={mess}
             onChange={(e) => setmess(e.target.value)}
           />
           <button
             className="submit-button"
-            onClick={(e) => {
-              e.preventDefault();
-              run();
-            }}
+                type="submit"
           >
             Find Route
           </button>
@@ -234,40 +466,85 @@ Extract locations even from vague, informal sentences.`;
 
       <div className="info-container">
         <div className="info-text">
+          <div className="route-stop">
+            <div className="stop-number">S</div>
           <div>
-            <span className="info-label">From:</span> {place || "Not selected"}
+              <span className="info-label">Starting Point:</span>
+              <div>{cleanLocationText(place)}</div>
+            </div>
+          </div>
+          
+          {destinations.map((dest, index) => (
+            <div key={index} className="route-stop">
+              <div className="stop-number">{index === destinations.length - 1 ? 'F' : (index + 1)}</div>
+          <div>
+                <span className="info-label">
+                  {index === destinations.length - 1 ? 'Final Destination' : `Stop ${index + 1}`}:
+                </span>
+                <div>{cleanLocationText(dest)}</div>
+              </div>
+          </div>
+          ))}
+
+          {Distance && Duration && (
+            <>
+          <div>
+                <span className="info-label">Total Distance:</span> {Distance}
           </div>
           <div>
-            <span className="info-label">To:</span> {dest || "Not selected"}
+                <span className="info-label">Total Duration:</span> {Duration}
           </div>
-          <div>
-            <span className="info-label">Distance:</span>{" "}
-            {Distance || "Not calculated"}
-          </div>
-          <div>
-            <span className="info-label">Duration:</span>{" "}
-            {Duration || "Not calculated"}
-          </div>
+            </>
+          )}
         </div>
+
+        {placesOnRoute.length > 0 && (
+          <div className={`floating-attractions ${isAttractionsMinimized ? 'minimized' : ''}`}>
+            <div className="attractions-header">
+              <h3 className="attractions-title">
+                {isAttractionsMinimized ? '🎯' : 'Tourist Attractions'}
+              </h3>
+              <button 
+                className="minimize-button"
+                onClick={() => setIsAttractionsMinimized(!isAttractionsMinimized)}
+              >
+                {isAttractionsMinimized ? '↔' : '←'}
+              </button>
+            </div>
+            
+            <div className="attractions-content">
+              {placesOnRoute.map((place, index) => (
+                <div 
+                  key={index} 
+                  className="attraction-item"
+                  onClick={() => handleAttractionClick(place)}
+                >
+                  {place.photos && (
+                    <img 
+                      src={place.photos[0].getUrl()}
+                      alt={place.name}
+                      className="attraction-thumbnail"
+                    />
+                  )}
+                  <div className="attraction-info">
+                    <div className="attraction-name">{place.name}</div>
+                    <div className="attraction-rating">
+                      <span>★ {place.rating || 'N/A'}</span>
+                      <span>•</span>
+                      <span>{place.user_ratings_total || 0} reviews</span>
+                </div>
+              </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       <button
         className="tap-button"
-        onClick={async () => {
-          console.log(`place = ${place} destination = ${dest}`);
-          console.log(`the place and destination will be ${place}`);
-          const directionsService = new google.maps.DirectionsService();
-          const results = await directionsService.route({
-            origin: place == "not" ? userLocation : `${place} goa`,
-            destination: `${dest} goa`,
-
-            travelMode: google.maps.TravelMode.DRIVING,
-          });
-          setDirectionsResponse(results);
-          console.log("the respose is got", results);
-          setDistance(results.routes[0].legs[0].distance.text);
-          setDuration(results.routes[0].legs[0].duration.text);
-        }}
+            onClick={calculateRoute}
+            disabled={!place || destinations.length === 0}
       >
         Show Route
       </button>
@@ -338,13 +615,12 @@ Extract locations even from vague, informal sentences.`;
 
             {placesOnRoute.map((placeObj, idx) => (
               <Marker
-                key={idx}
-                onClick={() => console.log("clicked")}
-                onMouseOver={() => setActiveMarker(idx)}
-                onMouseOut={() => setActiveMarker(null)}
+                    key={placeObj.place_id || idx}
+                    onClick={() => setActiveMarker(placeObj.place_id)}
                 position={placeObj.geometry.location}
+                    animation={activeMarker === placeObj.place_id ? window.google.maps.Animation.BOUNCE : null}
               >
-                {activeMarker === idx && (
+                    {activeMarker === placeObj.place_id && (
                   <InfoWindow onCloseClick={() => setActiveMarker(null)}>
                     <div className="info-window">
                       <img
@@ -372,11 +648,17 @@ Extract locations even from vague, informal sentences.`;
             {directionsResponse && (
               <DirectionsRenderer directions={directionsResponse} />
             )}
+
+                {user && (
+                  <SOSButton user={user} userLocation={userLocation} />
+            )}
           </GoogleMap>
         ) : (
           <>loading</>
         )}
       </div>
+        </>
+      )}
     </div>
   );
 }
